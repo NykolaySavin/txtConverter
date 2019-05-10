@@ -1,0 +1,34 @@
+[hidden] {
+    display: none !important;
+}
+div{
+    display: flex;    flex-direction: column;
+    align-items: center;
+    justify-items: center;
+}
+.page{
+    display: flex;
+    flex-grow: 1;
+    align-items: center;
+    justify-items: center;
+}
+.header{
+
+}
+.content{
+
+}
+.table caption{
+    font-size: 24px;
+}
+.table tr,td,th{
+    border-collapse: collapse;
+    border: 1px solid black;
+    font-size: 20px;
+}
+.selected{
+    background:gray ;
+}
+.table-hover tr:hover{
+background:gray ;
+}

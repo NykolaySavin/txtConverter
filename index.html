@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Title</title>
+    <link rel="stylesheet" type="text/css" href="styles.css" media="screen" />
+    <!-- Latest compiled and minified CSS -->
+    <script
+            crossorigin
+            src="https://unpkg.com/react@16/umd/react.production.min.js"
+    ></script>
+    <script
+            crossorigin
+            src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.25.0/babel.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <script src="components/FileUploader.jsx" type="text/babel"></script>
+    <script src="components/TableView.jsx" type="text/babel"></script>
+    <script src="http://cdn.jsdelivr.net/g/filesaver.js"></script>
+
+</head>
+<body>
+<script type="text/babel"></script>
+<script>
+    function SaveAsFile(t,f,m) {
+        try {
+            var b = new Blob([t],{type:m});
+            saveAs(b, f);
+        } catch (e) {
+            window.open("data:"+m+"," + encodeURIComponent(t), '_blank','');
+        }
+    }
+</script>
+    <div class="page" id="app"></div>
+</body>
+</html>
