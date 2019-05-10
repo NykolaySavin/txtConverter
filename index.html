@@ -1,39 +1,204 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <title>Title</title>
-    <link rel="stylesheet" type="text/css" href="styles.css" media="screen" />
+    <style type="text/css">
+      [hidden] {
+        display: none !important;
+      }
+      div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-items: center;
+      }
+      .page {
+        display: flex;
+        flex-grow: 1;
+        align-items: center;
+        justify-items: center;
+      }
+      .header {
+      }
+      .content {
+      }
+      .table caption {
+        font-size: 24px;
+      }
+      .table tr,
+      td,
+      th {
+        border-collapse: collapse;
+        border: 1px solid black;
+        font-size: 20px;
+      }
+      .selected {
+        background: gray;
+      }
+      .table-hover tr:hover {
+        background: gray;
+      }
+    </style>
     <!-- Latest compiled and minified CSS -->
     <script
-            crossorigin
-            src="https://unpkg.com/react@16/umd/react.production.min.js"
+      crossorigin
+      src="https://unpkg.com/react@16/umd/react.production.min.js"
     ></script>
     <script
-            crossorigin
-            src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"
+      crossorigin
+      src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"
     ></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.25.0/babel.min.js"></script>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css"
+    />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
-    <script src="components/FileUploader.jsx" type="text/babel"></script>
-    <script src="components/TableView.jsx" type="text/babel"></script>
     <script src="http://cdn.jsdelivr.net/g/filesaver.js"></script>
-
-</head>
-<body>
-<script type="text/babel"></script>
-<script>
-    function SaveAsFile(t,f,m) {
-        try {
-            var b = new Blob([t],{type:m});
-            saveAs(b, f);
-        } catch (e) {
-            window.open("data:"+m+"," + encodeURIComponent(t), '_blank','');
+  </head>
+  <body>
+    <script type="text/babel">
+      class Record {
+        constructor(s) {
+          this.sortCode = s.substring(0, 6);
+          this.amount = Number.parseFloat(s.substring(35, 46)) / 100;
+          this.bsb = "60300626859246";
+          this.accountNumber = s.substring(6, 14);
+          this.name = s.substring(82, s.length);
         }
-    }
-</script>
+      }
+      class FileUploader extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = { lines: [] };
+          this.handleFileUpload = this.handleFileUpload.bind(this);
+          this.handleLoad = this.handleLoad.bind(this);
+        }
+        handleFileUpload = (callback, e) => {
+          var files = e.target.files,
+            f = files[files.length - 1];
+          const reader = new FileReader();
+          reader.onload = () => callback(reader.result);
+          reader.readAsText(f);
+        };
+        handleLoad = fileData => {
+          const data = fileData
+            .split(/[\r\n]+/g)
+          const lines = data.slice(4,data.length-4)
+            .map(item => new Record(item));
+          //  .map(line => line.split(/[,]/).filter(item => item.length > 0))
+          //.map(item => new Record(item));
+          console.dir(lines);
+          this.setState({ lines: lines });
+        };
+        render() {
+          return (
+            <div>
+              <div className="header">
+                <label className="btn btn-default">
+                  Browse{" "}
+                  <input
+                    type="file"
+                    onChange={this.handleFileUpload.bind(this, this.handleLoad)}
+                    hidden
+                  />
+                </label>
+              </div>
+              {this.state.lines.length > 0 ? (
+                <TableView records={this.state.lines} />
+              ) : null}
+            </div>
+          );
+        }
+      }
+      class TableView extends React.Component {
+        constructor(props) {
+          super(props);
+          this.selectRecord = this.selectRecord.bind(this);
+          this.download = this.download.bind(this);
+          this.state = { records: [] };
+        }
+        selectRecord(record) {
+          const selectedRecords = this.state.records;
+          if (selectedRecords.find(item => item == record))
+            this.setState({
+              records: selectedRecords.filter(item => item != record)
+            });
+          else this.setState({ records: [...selectedRecords, record] });
+        }
+        download() {
+          const result = this.state.records.reduce(
+            (acc, cur) =>
+              acc +
+              `,,,01,,,,,,,,,${cur.bsb},,,,${cur.amount},,${
+                this.state.paymentDate.substring(8,10)+this.state.paymentDate.substring(5,7)+this.state.paymentDate.substring(0,4)
+              },,,,,,${cur.sortCode},,,,,,${cur.accountNumber},,${cur.name}` +
+              "\r\n",
+            ""
+          );
+          SaveAsFile(result, `payments_export_${
+          this.state.paymentDate.substring(8,10)+this.state.paymentDate.substring(5,7)+this.state.paymentDate.substring(0,4)
+              }_.txt`, "text/plain;charset=utf-8");
+        }
+        render() {
+          return (
+            <div>
+              <div className="date-picker">
+                <div className="form-group">
+                  <label htmlFor="inputDate">Confirm Payment Date:</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    onChange={event =>
+                      this.setState({ paymentDate: event.target.value })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="container">
+                <table className="table table-hover">
+                  <caption>Select Records</caption>
+                  {this.props.records.map(record => (
+                    <tr
+                      className={
+                        this.state.records.find(item => item == record)
+                          ? "selected"
+                          : null
+                      }
+                      key={record.accountNumber}
+                      onClick={() => this.selectRecord(record)}
+                    >
+                      <td>{record.accountNumber}</td>
+                      <td>{record.bsb}</td>
+                      <td>{record.name}</td>
+                      <td>{record.amount}</td>
+                      <td>{record.sortCode}</td>
+                    </tr>
+                  ))}
+                </table>
+                {this.state.records.length > 0 && this.state.paymentDate ? (
+                  <label className="btn btn-default" onClick={this.download}>
+                    Download File{" "}
+                  </label>
+                ) : null}
+              </div>
+            </div>
+          );
+        }
+      }
+      function SaveAsFile(t, f, m) {
+        try {
+          var b = new Blob([t], { type: m });
+          saveAs(b, f);
+        } catch (e) {
+          window.open("data:" + m + "," + encodeURIComponent(t), "_blank", "");
+        }
+      }
+      ReactDOM.render(<FileUploader />, document.getElementById("app"));
+    </script>
+    <script></script>
     <div class="page" id="app"></div>
-</body>
+  </body>
 </html>
